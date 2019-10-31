@@ -156,6 +156,32 @@ beforeRouteLeave(to, from, next) {
 基本上這兩個原理是相同的，首先會設定 model，來處理相關資訊。
 
 ```
+
+DataBase setting:
+
+.env:
+DB_CONNECT = your mongoDB setting
+
+server:
+
+const mongoose = require("mongoose");
+const dotenv = require("dotenv");
+
+dotenv.config();
+
+mongoose.connect(
+  process.env.DB_CONNECT,
+  { useNewUrlParser: true, useUnifiedTopology: true },
+  () => {
+    console.log("connect to db");
+  }
+);
+
+
+
+```
+
+```
 schema setting:
 
 const userSchema = new mongoose.Schema({
