@@ -1,4 +1,14 @@
-# 目錄
+# Catalog/目錄
+
+## English
+
+[GettingStarted](#GettingStarted)
+
+[GameRoom](#GameRoom)
+
+[LoginRegister](#LoginRegister)
+
+## 中文
 
 [啟動](#啟動)
 
@@ -8,8 +18,298 @@
 
 [登入註冊](#登入註冊)
 
+If you like this, please give me a star. Thank you !
+
 如果你喜歡，請給我一顆星，我會很感謝你。
-If you like this, please give me a star. Thank you!!
+
+# GettingStarted
+
+Hello, you can start this project by installing Vue and others modules with front-end and back-end by npm.
+
+```
+$ npm install
+```
+
+Then, we need to run the front-end and backend server.
+
+# Vue
+
+```
+$ npm run serve
+```
+
+# Node
+
+```
+$ npm run start
+```
+
+# Introduction
+
+This is an online chess game where players can play with others.
+
+The front-end is developed by vue.
+
+Manage the statement by vuex and config the router by vue-router.
+
+I choose socket.io to build the real-time online chess application.
+
+The back-end is developed by node/express.
+
+It receives requests, including chess board and login/registration info, etc.
+
+And mongoDB, NoSQL, will save data which pass by Joi validation.
+
+# GameRoom
+
+After you login, you can enter the room to play and chat with other players.
+
+So first you choose the room from the room list and join.
+
+<img src='https://raw.githubusercontent.com/tsen1220/VueNodeOnlineXChess/master/introimg/room.jpg' alt=''>
+
+If you enter the room paramaters and this room is not exist, you will return the room list.
+
+If the room is full, you will quit by system. Then, you need to find the new room.
+
+<img src='https://raw.githubusercontent.com/tsen1220/VueNodeOnlineXChess/master/introimg/roomfull.jpg' alt=''>
+
+If you aren't login, you can't play with others.
+
+<img src='https://raw.githubusercontent.com/tsen1220/VueNodeOnlineXChess/master/introimg/beforeLogin.jpg' alt=''>
+
+When you enter the room, client will emit the userid and room name from vuex by socket.io. Server will save these info.
+
+<img src='https://raw.githubusercontent.com/tsen1220/VueNodeOnlineXChess/master/introimg/game.jpg' alt=''>
+
+After entering the room, the chess board lock until another player enter. Otherwise, when this turn is not your turn, your chess board will lock.
+
+However, one player leaves room or win the chess game. system will reset the chess board after 5 seconds.
+
+```
+race setting:
+
+    turn: true,       true:white turn false: black turn
+    gamewatching: true      true:can move piece
+
+```
+
+```
+
+socket server:
+
+  socket.on("sendMsg", (msg, userid, roomName) => {
+    socket.to(roomName).emit("recMsg", { msg, userid });
+  });
+  ....
+
+socket client:
+      this.$socket.emit("sendMsg", this.msgInput, this.userid, this.roomName);
+
+```
+
+```
+
+Vue socket.io setting:
+
+import VueSocketIO from "vue-socket.io";
+import io from "socket.io-client";
+
+Vue.use(
+  new VueSocketIO({
+    debug: true,
+    connection: io("http://localhost:1111"),
+    vuex: {}
+  })
+);
+
+```
+
+If player leaves room, the socket.io listener will be unsubscribed to avoid the multiple same listener when web mount the same component.
+
+```
+
+beforeRouteLeave(to, from, next) {
+   this.sockets.unsubscribe("recMsg");
+   ...
+}
+
+    mounted(){
+   this.sockets.subscribe("recMsg", data => {
+      this.appendMsg(`${data.userid}:${data.msg}`);
+    });
+    }
+
+```
+
+# LoginRegister
+
+Login:
+
+<img src='https://raw.githubusercontent.com/tsen1220/VueNodeOnlineXChess/master/introimg/Login.jpg'>
+
+Registration:
+
+<img src='https://raw.githubusercontent.com/tsen1220/VueNodeOnlineXChess/master/introimg/register.jpg' alt=''>
+
+First, I set the model to process the account info.
+
+```
+
+DataBase setting:
+
+.env:
+DB_CONNECT = your mongoDB setting
+
+server:
+
+const mongoose = require("mongoose");
+const dotenv = require("dotenv");
+
+dotenv.config();
+
+mongoose.connect(
+  process.env.DB_CONNECT,
+  { useNewUrlParser: true, useUnifiedTopology: true },
+  () => {
+    console.log("connect to db");
+  }
+);
+
+
+
+```
+
+```
+schema setting:
+
+const userSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    max: 255,
+    min: 6
+  },
+  ....
+
+```
+
+Express router configs the API router.
+
+Joi validates the info ,then byscript hashes the password.
+
+```
+
+Joi:
+  const schema = Joi.object({
+    name: Joi.string()
+      .min(6)
+      .required(),
+      ....
+      ....
+
+      return schema.validate(data);
+
+byscript:
+  const salt = await bcrypt.genSalt(10);
+  const hashpwd = await bcrypt.hash(req.body.password, salt);
+
+```
+
+If the account email is existed when you register, system will send error message.
+
+```
+
+  const emailExist = await User.findOne({ email: req.body.email });
+  if (emailExist) {
+    return res.status(400).send("Email already exists");
+  }
+
+```
+
+When you login, system will check the mongoDB account table.
+
+```
+
+  const user = await User.findOne({ email: req.body.email });
+  if (!user) {
+    return res.status(400).send("Email or password is wrong.");
+  }
+
+    const validPass = await bcrypt.compare(req.body.password, user.password);
+  if (!validPass) {
+    return res.status(400).send("Invalid password");
+  }
+
+```
+
+When registration examination is ok , model will help me deal with the account info, then save to mongoDB.
+
+```
+
+  const user = new User({
+    name: req.body.name,
+    email: req.body.email,
+    password: hashpwd
+  });
+
+  try {
+    const savedUser = await user.save();
+    res.send(user._id);
+  } catch (err) {
+    res.status(400).send(err);
+  }
+
+```
+
+When you login, system will authorize and send token and userid.
+
+```
+  const username = user.name;
+  const token = jwt.sign({ _id: user.id }, process.env.TOKEN_SECRET);
+  res
+    .header("auth-token", { token: token, userid: username })
+    .send({ token: token, userid: username });
+
+
+```
+
+Vuex manage the statement, including the authorization info.
+
+This is state, mutations settings.
+
+If you are interested in actions settings or detail statement info, you can get from store.js.
+
+```
+
+ state:
+    token: localStorage.getItem("token") || null,
+    userid: localStorage.getItem("userid") || null,
+    type: "",
+    error: null
+
+  mutations:
+    Auth_Start(state)
+    ...,
+    Auth_Success(state, token, userid)
+    ...,
+    Auth_Fail(state)
+    ...,
+    Auth_Logout(state)
+    ...,
+
+  actions:
+    login({ commit }, user)
+    ...
+    ... ,
+    register({ commit }, user)
+    ...
+    ... ,
+    logout({ commit })
+    ...
+    ... ,
+
+```
 
 # 啟動
 
@@ -278,7 +578,6 @@ byscript:
 而傳到前端的資訊會由 Vuex 進行狀態管理，登入註冊的觸發細節位於 actions，在此為一些基本設定。
 
 ```
-
  state:
     token: localStorage.getItem("token") || null,
     userid: localStorage.getItem("userid") || null,
@@ -287,8 +586,23 @@ byscript:
 
   mutations:
     Auth_Start(state)
+    ...,
     Auth_Success(state, token, userid)
+    ...,
     Auth_Fail(state)
+    ...,
     Auth_Logout(state)
+    ...,
+
+  actions:
+    login({ commit }, user)
+    ...
+    ... ,
+    register({ commit }, user)
+    ...
+    ... ,
+    logout({ commit })
+    ...
+    ... ,
 
 ```
