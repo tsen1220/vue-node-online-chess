@@ -32,13 +32,13 @@ $ npm install
 
 Then, we need to run the front-end and backend server.
 
-# Vue
+## Vue
 
 ```
 $ npm run serve
 ```
 
-# Node
+## Node
 
 ```
 $ npm run start
