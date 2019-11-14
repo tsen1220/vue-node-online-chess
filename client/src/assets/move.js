@@ -27,7 +27,23 @@ function movePiece(
           (Math.abs(targetrow - selectrow) === 1 ||
             Math.abs(targetrow - selectrow) === 2) &&
           targetpiece === 0 &&
-          targetcolumn - selectcolumn === 0
+          targetcolumn - selectcolumn === 0 &&
+          board[selectrow + 1][selectcolumn] === 0
+        ) {
+          replacePiece(
+            selectdom,
+            selectpiece,
+            selectrow,
+            selectcolumn,
+            targetdom,
+            targetrow,
+            targetcolumn,
+            board
+          );
+        } else if (
+          targetpiece > 0 &&
+          targetrow - selectrow === 1 &&
+          Math.abs(targetcolumn - selectcolumn) === 1
         ) {
           replacePiece(
             selectdom,
@@ -101,7 +117,23 @@ function movePiece(
           (Math.abs(targetrow - selectrow) === 1 ||
             Math.abs(targetrow - selectrow) === 2) &&
           targetpiece === 0 &&
-          targetcolumn - selectcolumn === 0
+          targetcolumn - selectcolumn === 0 &&
+          board[selectrow - 1][selectcolumn] === 0
+        ) {
+          replacePiece(
+            selectdom,
+            selectpiece,
+            selectrow,
+            selectcolumn,
+            targetdom,
+            targetrow,
+            targetcolumn,
+            board
+          );
+        } else if (
+          targetpiece < 0 &&
+          targetrow - selectrow === -1 &&
+          Math.abs(targetcolumn - selectcolumn) === 1
         ) {
           replacePiece(
             selectdom,
@@ -764,6 +796,53 @@ function movePiece(
     //黑國王
     case -6:
       if (
+        targetrow === 0 &&
+        targetcolumn === 2 &&
+        selectrow === 0 &&
+        selectcolumn === 4 &&
+        board[0][0] === -2 &&
+        targetpiece >= 0 &&
+        board[0][1] === 0 &&
+        board[0][2] === 0 &&
+        board[0][3] === 0
+      ) {
+        replacePiece(
+          selectdom,
+          selectpiece,
+          selectrow,
+          selectcolumn,
+          targetdom,
+          targetrow,
+          targetcolumn,
+          board
+        );
+        KingCastleMove(-2, 0, 0, 0, 3, board, roomName);
+      }
+
+      if (
+        targetrow === 0 &&
+        targetcolumn === 6 &&
+        selectrow === 0 &&
+        selectcolumn === 4 &&
+        board[0][7] === -2 &&
+        targetpiece >= 0 &&
+        board[0][6] === 0 &&
+        board[0][5] === 0
+      ) {
+        replacePiece(
+          selectdom,
+          selectpiece,
+          selectrow,
+          selectcolumn,
+          targetdom,
+          targetrow,
+          targetcolumn,
+          board
+        );
+        KingCastleMove(-2, 0, 7, 0, 5, board, roomName);
+      }
+
+      if (
         Math.abs((targetcolumn - selectcolumn) / (targetrow - selectrow)) ===
           1 &&
         targetpiece >= 0 &&
@@ -806,6 +885,53 @@ function movePiece(
 
     //白國王
     case 6:
+      if (
+        targetrow === 7 &&
+        targetcolumn === 6 &&
+        selectrow === 7 &&
+        selectcolumn === 4 &&
+        board[7][7] === 2 &&
+        targetpiece <= 0 &&
+        board[7][6] === 0 &&
+        board[7][5] === 0
+      ) {
+        replacePiece(
+          selectdom,
+          selectpiece,
+          selectrow,
+          selectcolumn,
+          targetdom,
+          targetrow,
+          targetcolumn,
+          board
+        );
+        KingCastleMove(2, 7, 7, 7, 5, board, roomName);
+      }
+
+      if (
+        targetrow === 7 &&
+        targetcolumn === 2 &&
+        selectrow === 7 &&
+        selectcolumn === 4 &&
+        board[7][0] === 2 &&
+        targetpiece <= 0 &&
+        board[7][1] === 0 &&
+        board[7][2] === 0 &&
+        board[7][3] === 0
+      ) {
+        replacePiece(
+          selectdom,
+          selectpiece,
+          selectrow,
+          selectcolumn,
+          targetdom,
+          targetrow,
+          targetcolumn,
+          board
+        );
+        KingCastleMove(2, 7, 0, 7, 3, board, roomName);
+      }
+
       if (
         Math.abs((targetcolumn - selectcolumn) / (targetrow - selectrow)) ===
           1 &&
@@ -1059,6 +1185,45 @@ function whitePawnButton(pawnButton, board, targetrow, targetcolumn, roomName) {
       pawnBut.removeChild(pawnBut.childNodes[0]);
     }
   });
+}
+
+function KingCastleMove(
+  Castlepiece,
+  selectrow,
+  selectcolumn,
+  targetrow,
+  targetcolumn,
+  board,
+  roomName
+) {
+  var castledom = document.getElementById(
+    `gamecell${selectrow}${selectcolumn}`
+  );
+  var castletargetdom = document.getElementById(
+    `gamecell${targetrow}${targetcolumn}`
+  );
+
+  castletargetdom.setAttribute("piece", Castlepiece);
+  castledom.setAttribute("piece", 0);
+  board[targetrow][targetcolumn] = Castlepiece;
+  board[selectrow][selectcolumn] = 0;
+
+  piece.drawPieceAtBoard(board, selectrow, selectcolumn);
+  piece.drawPieceAtBoard(board, targetrow, targetcolumn);
+
+  socket.emit(
+    "boardRecord",
+    board,
+    selectrow,
+    selectcolumn,
+    castledom,
+    Castlepiece,
+    targetrow,
+    targetcolumn,
+    castletargetdom,
+    0,
+    roomName
+  );
 }
 
 module.exports = { movePiece: movePiece };
