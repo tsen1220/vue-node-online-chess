@@ -20,7 +20,7 @@ If you like this, please give me a star. Thank you !
 
 [登入註冊](#登入註冊)
 
-如果你喜歡，請給我一顆星，我會很感謝你。
+如果你喜歡，請給我一顆星，感謝你。
 
 # GettingStarted
 
