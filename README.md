@@ -8,6 +8,8 @@
 
 [LoginRegister](#LoginRegister)
 
+If you like this, please give me a star. Thank you !
+
 ## 中文
 
 [啟動](#啟動)
@@ -17,8 +19,6 @@
 [遊戲房間](#遊戲房間)
 
 [登入註冊](#登入註冊)
-
-If you like this, please give me a star. Thank you !
 
 如果你喜歡，請給我一顆星，我會很感謝你。
 
